@@ -69,5 +69,7 @@
 #include "iengine.h"
 #include "igame.h"
 
+#include "ClrServer.h"
+
 #endif
 
