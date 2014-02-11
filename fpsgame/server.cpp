@@ -1904,11 +1904,13 @@ namespace server
         sendpacket(-1, 1, p.finalize(), ci->clientnum);
     }
 
+	#include "ents.h"
+
     void loaditems()
     {
         resetitems();
         notgotitems = true;
-        if(m_edit || !loadents(smapname, ments, &mcrc))
+        if(m_edit || !e::loadents(smapname, ments, mcrc))
             return;
         loopv(ments) if(canspawnitem(ments[i].type))
         {
