@@ -2,6 +2,7 @@
 // runs dedicated or as client coroutine
 
 #include "cube.h"
+#include <stdio.h>
 
 #define LOGSTRLEN 512
 
@@ -86,6 +87,7 @@ void conoutfv(int type, const char *fmt, va_list args)
     string sf, sp;
     vformatstring(sf, fmt, args);
     filtertext(sp, sf);
+	printf("%s", sp);
     logoutf("%s", sp);
 }
 

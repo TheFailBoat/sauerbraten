@@ -29,5 +29,27 @@ namespace Sauerbraten.Interfaces
         {
             return true;
         }
+
+        public bool OnRenaming(int clientNumber)
+        {
+            return true;
+        }
+        public bool OnAllowRename(int clientNumber, string newName)
+        {
+            return true;
+        }
+        public bool OnRename(int clientNumber, string oldName, string newName)
+        {
+            return true;
+        }
+
+        public bool OnTeamChange(int clientNumber, string oldTeam, string newTeam)
+        {
+            return true;
+        }
+        public bool OnTeamChangeRequest(int clientNumber, string oldTeam, string newTeam)
+        {
+            return true;
+        }
     }
 }

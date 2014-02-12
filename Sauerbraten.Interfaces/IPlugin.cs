@@ -15,15 +15,17 @@ namespace Sauerbraten.Interfaces
         bool OnDisconnect(int clientNumber, string reason);
         bool OnFailedConnect(string hostname, string reason);
 
-        //TODO extern lua::event< boost::tuple<int> >                                      event_maploaded;
-        //TODO extern lua::event< boost::tuple<int,int> >                                  event_renaming;
-        //TODO extern lua::event< boost::tuple<int,const char *> >                         event_allow_rename;
-        //TODO extern lua::event< boost::tuple<int,const char *,const char *> >            event_rename;
-        //TODO extern lua::event< boost::tuple<int,const char *,const char *> >            event_reteam;
-        //TODO extern lua::event< boost::tuple<int,const char *,const char *> >            event_chteamrequest;
+        bool OnRenaming(int clientNumber);
+        bool OnAllowRename(int clientNumber, string newName);
+        bool OnRename(int clientNumber, string oldName, string newName);
+
+        bool OnTeamChange(int clientNumber, string oldTeam, string newTeam);
+        bool OnTeamChangeRequest(int clientNumber, string oldTeam, string newTeam);
+
         //TODO extern lua::event< boost::tuple<int,const char *> >                         event_text;
         //TODO extern lua::event< boost::tuple<int,const char *> >                         event_sayteam;
         //TODO extern lua::event< boost::tuple<int,const char *> >                         event_servcmd;
+
         //TODO extern lua::event< boost::tuple<int,const char *,const char *> >            event_mapvote;
         //TODO extern lua::event< boost::tuple<int, const char *,const char *> >           event_setmastermode;
         //TODO extern lua::event< boost::tuple<int, const char *,const char *> >           event_setmastermode_request;

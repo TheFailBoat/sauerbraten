@@ -347,6 +347,14 @@ namespace server
 			mapchange();
 		}
 
+		const char * hostname()const
+		{
+			static char hostname_buffer[16];
+			ENetAddress addr;
+			addr.host = getclientip(clientnum);
+			return ((enet_address_get_host_ip(&addr, hostname_buffer, sizeof(hostname_buffer)) == 0) ? hostname_buffer : "unknown");
+		}
+
 		int geteventmillis(int servmillis, int clientmillis)
 		{
 			if (!timesync || (events.empty() && state.waitexpired(servmillis)))
@@ -776,15 +784,15 @@ namespace server
 		return false;
 	}
 
-	ClrServer^* clrServer;
 	void serverinit()
 	{
 		smapname[0] = '\0';
 		resetitems();
 
 		// init clr server
-		ClrServer^ ncs = gcnew ClrServer();
-		clrServer = &ncs;
+		ClrServer::instance = gcnew ClrServer();
+
+		ClrServer::instance->OnInit();
 	}
 
 	int numclients(int exclude = -1, bool nospec = true, bool noai = true, bool priv = false)
@@ -2486,7 +2494,8 @@ namespace server
 
 	void clientdisconnect(int n)
 	{
-		clientinfo *ci = getinfo(n);
+		clientinfo *ci = getinfo(n);     
+		
 		loopv(clients) if (clients[i]->authkickvictim == ci->clientnum) clients[i]->cleanauth();
 		if (ci->connected)
 		{
@@ -2497,10 +2506,18 @@ namespace server
 			sendf(-1, 1, "ri2", N_CDIS, n);
 			clients.removeobj(ci);
 			aiman::removeai(ci);
+
+			//TODO reason
+			ClrServer::instance->OnDisconnect(n, "normal");
+
 			if (!numclients(-1, false, true)) noclients(); // bans clear when server empties
 			if (ci->local) checkpausegame();
 		}
-		else connects.removeobj(ci);
+		else 
+		{
+			ClrServer::instance->OnFailedConnect(ci->hostname(), "normal");
+			connects.removeobj(ci);
+		}
 	}
 
 	int reserveclients() { return 3; }
@@ -2553,6 +2570,12 @@ namespace server
 	{
 		if (ci->local) return DISC_NONE;
 		if (!m_mp(gamemode)) return DISC_LOCAL;
+
+		if (!ClrServer::instance->OnConnecting(ci->clientnum, ci->hostname(), ci->name, pwd, false))
+		{
+			return DISC_IPBAN;
+		}
+
 		if (serverpass[0])
 		{
 			if (!checkpassword(ci, serverpass, pwd)) return DISC_PASSWORD;
@@ -2564,6 +2587,7 @@ namespace server
 		loopv(bannedips) if (bannedips[i].ip == ip) return DISC_IPBAN;
 		if (checkgban(ip)) return DISC_IPBAN;
 		if (mastermode >= MM_PRIVATE && allowedips.find(ip) < 0) return DISC_PRIVATE;
+
 		return DISC_NONE;
 	}
 
@@ -2751,6 +2775,8 @@ namespace server
 		if (m_demo) setupdemoplayback();
 
 		if (servermotd[0]) sendf(ci->clientnum, 1, "ris", N_SERVMSG, servermotd);
+
+		ClrServer::instance->OnConnect(ci->clientnum, false);
 	}
 
 	void parsepacket(int sender, int chan, packetbuf &p)     // has to parse exactly each byte of the packet
@@ -3097,9 +3123,33 @@ namespace server
 		{
 			QUEUE_MSG;
 			getstring(text, p);
-			filtertext(ci->name, text, false, MAXNAMELEN);
-			if (!ci->name[0]) copystring(ci->name, "unnamed");
-			QUEUE_STR(ci->name);
+			filtertext(text, text, false, MAXNAMELEN);
+			if (!text[0]) copystring(ci->name, "unnamed");
+			
+			bool allow_rename = strcmp(ci->name, text) &&
+				ClrServer::instance->OnAllowRename(ci->clientnum, text);
+
+			if (allow_rename)
+			{
+				string oldname;
+				copystring(oldname, ci->name);
+
+				copystring(ci->name, text);
+
+				ClrServer::instance->OnRenaming(ci->clientnum);
+				ClrServer::instance->OnRename(ci->clientnum, oldname, ci->name);
+
+				QUEUE_INT(N_SWITCHNAME);
+				QUEUE_STR(ci->name);
+			}
+			else
+			{
+				if (strcmp(ci->name, text))
+				{
+					//TODO set back to old??
+				}
+			}
+
 			break;
 		}
 
@@ -3114,11 +3164,20 @@ namespace server
 		{
 			getstring(text, p);
 			filtertext(text, text, false, MAXTEAMLEN);
-			if (m_teammode && text[0] && strcmp(ci->team, text) && (!smode || smode->canchangeteam(ci, ci->team, text)) && addteaminfo(text))
+
+			string oldTeam;
+			copystring(oldTeam, ci->team);
+
+			bool allow = m_teammode && text[0] && strcmp(ci->team, text) && (!smode || smode->canchangeteam(ci, ci->team, text))
+				&& ClrServer::instance->OnTeamChangeRequest(ci->clientnum, oldTeam, ci->team);
+
+			if (allow && addteaminfo(text))
 			{
 				if (ci->state.state == CS_ALIVE) suicide(ci);
+
 				copystring(ci->team, text);
 				aiman::changeteam(ci);
+				ClrServer::instance->OnTeamChange(ci->clientnum, oldTeam, text);
 				sendf(-1, 1, "riisi", N_SETTEAM, sender, ci->team, ci->state.state == CS_SPECTATOR ? -1 : 0);
 			}
 			break;
@@ -3285,9 +3344,15 @@ namespace server
 			if (!ci->privilege && !ci->local) break;
 			clientinfo *wi = getinfo(who);
 			if (!m_teammode || !text[0] || !wi || !strcmp(wi->team, text)) break;
-			if ((!smode || smode->canchangeteam(wi, wi->team, text)) && addteaminfo(text))
+
+			string oldTeam;
+			copystring(oldTeam, wi->team);
+
+			if ((!smode || smode->canchangeteam(wi, wi->team, text)) &&
+				ClrServer::instance->OnTeamChangeRequest(wi->clientnum, oldTeam, ci->team)  && addteaminfo(text))
 			{
 				if (wi->state.state == CS_ALIVE) suicide(wi);
+				ClrServer::instance->OnTeamChange(wi->clientnum, oldTeam, text);
 				copystring(wi->team, text, MAXTEAMLEN + 1);
 			}
 			aiman::changeteam(wi);
