@@ -76,7 +76,7 @@ public:
 
 
 private:
-	void LoadDll(const char* path);
+	void LoadDll(System::String^ path);
 
 	PluginList^ plugins;
 };

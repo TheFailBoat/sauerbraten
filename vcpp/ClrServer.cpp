@@ -6,6 +6,20 @@
 ClrServer::ClrServer()
 {
 	plugins = gcnew PluginList();
+
+	System::String^ corePath = System::IO::Path::Combine(System::Environment::CurrentDirectory, "bin/plugins/Sauerbraten.Core.dll");
+	LoadDll(corePath);
+
+	auto toLoad = System::IO::Directory::GetFiles("bin/plugins", "*.dll", System::IO::SearchOption::AllDirectories);
+	for (int i = 0; i < toLoad->Length; i++) {
+		try {
+			if (System::IO::Path::GetFileName(toLoad[0]) != "Sauerbraten.Core.dll")
+				LoadDll(toLoad[i]);
+		}
+		catch (System::Exception^) {
+			fatal("error loading a plugin.");
+		}
+	}
 }
 
 
@@ -22,14 +36,16 @@ void ClrServer::SetMasterMode(int value, int cn){
 	server::SetMasterMode(value, cn);
 }
 
-void ClrServer::LoadDll(const char* path){
-	auto assembly = System::AppDomain::CurrentDomain->Load(gcnew System::String(path));
+void ClrServer::LoadDll(System::String^ path){
+	auto assembly = System::Reflection::Assembly::LoadFile(path);
 
 	auto types = assembly->GetExportedTypes();
 
 	for (int i = 0; i < types->Length; i++) {
-		if (types[0]->IsAssignableFrom(IPlugin::typeid)) {
+		if (IPlugin::typeid->IsAssignableFrom(types[0])) {
 			auto plugin = dynamic_cast<IPlugin^>(System::Activator::CreateInstance(types[0]));
+
+			printf("Loaded plugin: %s called '%s'\n", plugin->GetType()->FullName, plugin->Name);
 
 			plugins->Add(plugin);
 		}
@@ -68,7 +84,7 @@ bool ClrServer::OnConnect(int clientNumber, bool spy)
 bool ClrServer::OnDisconnect(int clientNumber, const char * _reason)
 {
 	System::String^ reason = gcnew System::String(_reason);
-	
+
 	PLUGINS_RUN(OnDisconnect, clientNumber, reason);
 }
 bool ClrServer::OnFailedConnect(const char * _hostname, const char * _reason)
