@@ -22,48 +22,57 @@ namespace Sauerbraten.Interfaces
         bool OnTeamChange(int clientNumber, string oldTeam, string newTeam);
         bool OnTeamChangeRequest(int clientNumber, string oldTeam, string newTeam);
 
-        //TODO extern lua::event< boost::tuple<int,const char *> >                         event_text;
-        //TODO extern lua::event< boost::tuple<int,const char *> >                         event_sayteam;
-        //TODO extern lua::event< boost::tuple<int,const char *> >                         event_servcmd;
+        bool OnText(int clientNumber, string text);
+        bool OnSayTeam(int clientNumber, string text);
+        bool OnServerCommand(int clientNumber, string text);
 
-        //TODO extern lua::event< boost::tuple<int,const char *,const char *> >            event_mapvote;
-        //TODO extern lua::event< boost::tuple<int, const char *,const char *> >           event_setmastermode;
-        //TODO extern lua::event< boost::tuple<int, const char *,const char *> >           event_setmastermode_request;
-        //TODO extern lua::event< boost::tuple<int,int> >                                  event_spectator;
-        //TODO extern lua::event< boost::tuple<int,int,int> >                              event_privilege;
-        //TODO extern lua::event< boost::tuple<int,int> >                                  event_teamkill;
-        //TODO extern lua::event< boost::tuple<int,const char *,const char *> >            event_authreq;
-        //TODO extern lua::event< boost::tuple<int,int,const char *> >                     event_authrep;
+        bool OnMapVote(int clientNumber, string map, string mode);
+        bool OnMapVotePassed(string map, string mode);
+
+        bool OnSetMasterMode(int clientNumber, string oldMode, string newMode);
+        bool OnSetMasterModeRequest(int a, string oldMode, string newMode);
+        bool OnSpectator(int clientNumber);
+        // bool OnPrivilege(int clientNumber, int oldLevel, int newLevel);
+        bool OnSetMaster(int clientNumber, string password, bool force);
+        bool OnClearBansRequest();
+        bool OnKickRequest(int kickerClientNumber, string kickerName, int banTime, int victimClientNumber, string victimName);
+
+        bool OnAuthRequest(int clientNumber, string username, string domain);
+        bool OnAuthResponse(int clientNumber, int id, string val);
+
+        bool OnModMap(int clientNumber, string map, int crc);
+
         //TODO extern lua::event< boost::tuple<int,int,int> >                              event_addbot;
         //TODO extern lua::event< boost::tuple<int> >                                      event_delbot;
         //TODO extern lua::event< boost::tuple<int> >                                      event_botleft;
-        //TODO extern lua::event< boost::tuple<int, const char *, int> >                   event_modmap;
-        //TODO extern lua::event< boost::tuple<int,int> >                                  event_teamkill;
-        //TODO extern lua::event< boost::tuple<int,int> >                                  event_frag;
-        //TODO extern lua::event< boost::tuple<int,int,int> >                              event_shot;
-        //TODO extern lua::event< boost::tuple<int> >                                      event_suicide;
-        //TODO extern lua::event< boost::tuple<int> >                                      event_spawn;
-        //TODO extern lua::event< boost::tuple<int, int, int, int> >                       event_damage;
-        //TODO extern lua::event< boost::tuple<int,const char*,bool> >                     event_setmaster;
+
+        bool OnTeamkill(int actorClientNumber, int targetClientNumber);
+        bool OnFrag(int actorClientNumber, int targetClientNumber);
+        bool OnShot(int clientNumber, int weapon, int hits);
+        bool OnSuicide(int clientNumber);
+        bool OnSpawn(int clientNumber);
+        bool OnDamage(int actorClientNumber, int targetClientNumber, int damage, int weapon);
+        bool OnTakeFlag(int clientNumber, string team);
+        bool OnDropFlag(int clientNumber, string team);
+        bool OnScoreFlag(int clientNumber, string team, int score);
+        bool OnReturnFlag(int clientNumber, string team);
+        bool OnFlagReset(string team);
+        bool OnScoreUpdate(string team, int score);
+
         //TODO extern lua::event< boost::tuple<int,int> >                                  event_respawnrequest;
-        //TODO extern lua::event< boost::tuple<> >                                         event_clearbans_request;
-        //TODO extern lua::event< boost::tuple<int, const char *, int, int, const char *> >  event_kick_request;
+
         //TODO extern lua::event< boost::tuple<> >                                         event_intermission;
         //TODO extern lua::event< boost::tuple<> >                                         event_finishedgame;
         //TODO extern lua::event< boost::tuple<int,int> >                                  event_timeupdate;
         //TODO extern lua::event< boost::tuple<const char *,const char *> >                event_mapchange;
         //TODO extern lua::event< boost::tuple<> >                                         event_setnextgame;
+
         //TODO extern lua::event< boost::tuple<> >                                         event_gamepaused;
         //TODO extern lua::event< boost::tuple<> >                                         event_gameresumed;
+
         //TODO extern lua::event< boost::tuple<int,const char *> >                         event_beginrecord;
         //TODO extern lua::event< boost::tuple<int,int> >                                  event_endrecord;
-        //TODO extern lua::event< boost::tuple<const char *,const char *> >                event_votepassed;
-        //TODO extern lua::event< boost::tuple<int, const char *> >                        event_takeflag;
-        //TODO extern lua::event< boost::tuple<int, const char *> >                        event_dropflag;
-        //TODO extern lua::event< boost::tuple<int, const char *, int> >                   event_scoreflag;
-        //TODO extern lua::event< boost::tuple<int, const char *> >                        event_returnflag;
-        //TODO extern lua::event< boost::tuple<const char *> >                             event_resetflag;
-        //TODO extern lua::event< boost::tuple<const char *, int> >                        event_scoreupdate;
+
         //TODO extern lua::event< boost::tuple<> >                                         event_started;
         //TODO extern lua::event< boost::tuple<int> >                                      event_shutdown;
         //TODO extern lua::event< boost::tuple<> >                                         event_shutdown_scripting;
@@ -72,6 +81,5 @@ namespace Sauerbraten.Interfaces
         //TODO extern lua::event< boost::tuple<> >                                         event_sleep;
         //TODO extern lua::event< boost::tuple<> >                                         event_interval;
         //TODO extern lua::event< boost::tuple<int, int, int, const char *> >              event_cheat;
-
     }
 }

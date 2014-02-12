@@ -122,6 +122,7 @@ namespace server
 		int lastshot;
 		projectilestate<8> rockets, grenades;
 		int frags, flags, deaths, teamkills, shotdamage, damage, tokens;
+		int suicides, hits, misses, shots;
 		int lasttimeplayed, timeplayed;
 		float effectiveness;
 
@@ -147,6 +148,8 @@ namespace server
 			timeplayed = 0;
 			effectiveness = 0;
 			frags = flags = deaths = teamkills = shotdamage = damage = tokens = 0;
+
+			suicides = hits = misses = shots = 0;
 
 			lastdeath = 0;
 
@@ -176,6 +179,7 @@ namespace server
 		uint ip;
 		string name;
 		int maxhealth, frags, flags, deaths, teamkills, shotdamage, damage;
+		int suicides, hits, misses, shots;
 		int timeplayed;
 		float effectiveness;
 
@@ -188,6 +192,12 @@ namespace server
 			teamkills = gs.teamkills;
 			shotdamage = gs.shotdamage;
 			damage = gs.damage;
+
+			suicides = gs.suicides;
+			hits = gs.hits;
+			misses = gs.misses;
+			shots = gs.shots;
+
 			timeplayed = gs.timeplayed;
 			effectiveness = gs.effectiveness;
 		}
@@ -202,6 +212,12 @@ namespace server
 			gs.teamkills = teamkills;
 			gs.shotdamage = shotdamage;
 			gs.damage = damage;
+			
+			gs.suicides = suicides;
+			gs.hits = hits;
+			gs.misses = misses;
+			gs.shots = shots;
+			
 			gs.timeplayed = timeplayed;
 			gs.effectiveness = effectiveness;
 		}
@@ -1437,6 +1453,9 @@ namespace server
 		}
 		putint(p, -1);
 		sendpacket(-1, 1, p.finalize());
+
+		ClrServer::instance->OnSetMaster(ci->clientnum, pass, force);
+
 		checkpausegame();
 		return true;
 	}
@@ -2049,6 +2068,7 @@ namespace server
 			if (best && (best->count > (force ? 1 : maxvotes / 2)))
 			{
 				sendservmsg(force ? "vote passed by default" : "vote passed by majority");
+				ClrServer::instance->OnMapVotePassed(best->map, modename(best->mode));
 				changemap(best->map, best->mode);
 			}
 			else rotatemap(true);
@@ -2117,6 +2137,11 @@ namespace server
 
 	void dodamage(clientinfo *target, clientinfo *actor, int damage, int gun, const vec &hitpush = vec(0, 0, 0))
 	{
+		if (!ClrServer::instance->OnDamage(actor->clientnum, target->clientnum, damage, gun))
+		{
+			return;
+		}
+
 		gamestate &ts = target->state;
 		ts.dodamage(damage);
 		if (target != actor && !isteam(target->team, actor->team)) actor->state.damage += damage;
@@ -2131,6 +2156,12 @@ namespace server
 		if (ts.health <= 0)
 		{
 			target->state.deaths++;
+			target->state.suicides += actor == target;
+			if (actor != target && isteam(actor->team, target->team))
+			{
+				actor->state.teamkills++;
+				ClrServer::instance->OnTeamkill(actor->clientnum, target->clientnum);
+			}
 			int fragvalue = smode ? smode->fragvalue(target, actor) : (target == actor || isteam(target->team, actor->team) ? -1 : 1);
 			actor->state.frags += fragvalue;
 			if (fragvalue > 0)
@@ -2142,16 +2173,12 @@ namespace server
 			}
 			teaminfo *t = m_teammode ? teaminfos.access(actor->team) : NULL;
 			if (t) t->frags += fragvalue;
+			ClrServer::instance->OnFrag(actor->clientnum, target->clientnum);
 			sendf(-1, 1, "ri5", N_DIED, target->clientnum, actor->clientnum, actor->state.frags, t ? t->frags : 0);
 			target->position.setsize(0);
 			if (smode) smode->died(target, actor);
 			ts.state = CS_DEAD;
 			ts.lastdeath = gamemillis;
-			if (actor != target && isteam(actor->team, target->team))
-			{
-				actor->state.teamkills++;
-				addteamkill(actor, target, 1);
-			}
 			ts.deadflush = ts.lastdeath + DEATHMILLIS;
 			// don't issue respawn yet until DEATHMILLIS has elapsed
 			// ts.respawn();
@@ -2173,6 +2200,8 @@ namespace server
 		gs.state = CS_DEAD;
 		gs.lastdeath = gamemillis;
 		gs.respawn();
+
+		ClrServer::instance->OnSuicide(ci->clientnum);
 	}
 
 	void suicideevent::process(clientinfo *ci)
@@ -2232,6 +2261,10 @@ namespace server
 			int(to.x*DMF), int(to.y*DMF), int(to.z*DMF),
 			ci->ownernum);
 		gs.shotdamage += guns[gun].damage*(gs.quadmillis ? 4 : 1)*guns[gun].rays;
+
+		gs.shots++;
+		int old_hits = gs.hits;
+
 		switch (gun)
 		{
 		case GUN_RL: gs.rockets.add(id); break;
@@ -2247,6 +2280,9 @@ namespace server
 
 				totalrays += h.rays;
 				if (totalrays > maxrays) continue;
+
+				gs.hits += (ci != target ? 1 : 0);
+
 				int damage = h.rays*guns[gun].damage;
 				if (gs.quadmillis) damage *= 4;
 				dodamage(target, ci, damage, gun, h.dir);
@@ -2254,6 +2290,9 @@ namespace server
 			break;
 		}
 		}
+
+		gs.misses += (gs.hits - old_hits == 0);
+		ClrServer::instance->OnShot(ci->clientnum, gun, gs.hits - old_hits);
 	}
 
 	void pickupevent::process(clientinfo *ci)
@@ -2431,6 +2470,7 @@ namespace server
 		{
 			clientinfo *ci = clients[i];
 			if (ci->state.state == CS_SPECTATOR || ci->state.aitype != AI_NONE || ci->clientmap[0] || ci->mapcrc >= 0 || (req < 0 && ci->warned)) continue;
+			ClrServer::instance->OnModMap(ci->clientnum, ci->clientmap, ci->mapcrc);
 			formatstring(msg)("%s has modified map \"%s\"", colorname(ci), smapname);
 			sendf(req, 1, "ris", N_SERVMSG, msg);
 			if (req < 0) ci->warned = true;
@@ -2443,6 +2483,7 @@ namespace server
 			{
 				clientinfo *ci = clients[j];
 				if (ci->state.state == CS_SPECTATOR || ci->state.aitype != AI_NONE || !ci->clientmap[0] || ci->mapcrc != info.crc || (req < 0 && ci->warned)) continue;
+				ClrServer::instance->OnModMap(ci->clientnum, ci->clientmap, ci->mapcrc);
 				formatstring(msg)("%s has modified map \"%s\"", colorname(ci), smapname);
 				sendf(req, 1, "ris", N_SERVMSG, msg);
 				if (req < 0) ci->warned = true;
@@ -2457,7 +2498,7 @@ namespace server
 
 	void noclients()
 	{
-		bannedips.shrink(0);
+		ClrServer::instance->OnClearBansRequest();
 		aiman::clearai();
 	}
 
@@ -2494,8 +2535,8 @@ namespace server
 
 	void clientdisconnect(int n)
 	{
-		clientinfo *ci = getinfo(n);     
-		
+		clientinfo *ci = getinfo(n);
+
 		loopv(clients) if (clients[i]->authkickvictim == ci->clientnum) clients[i]->cleanauth();
 		if (ci->connected)
 		{
@@ -2513,7 +2554,7 @@ namespace server
 			if (!numclients(-1, false, true)) noclients(); // bans clear when server empties
 			if (ci->local) checkpausegame();
 		}
-		else 
+		else
 		{
 			ClrServer::instance->OnFailedConnect(ci->hostname(), "normal");
 			connects.removeobj(ci);
@@ -2637,69 +2678,17 @@ namespace server
 
 	bool tryauth(clientinfo *ci, const char *user, const char *desc)
 	{
-		ci->cleanauth();
-		if (!nextauthreq) nextauthreq = 1;
-		ci->authreq = nextauthreq++;
-		filtertext(ci->authname, user, false, 100);
-		copystring(ci->authdesc, desc);
-		if (ci->authdesc[0])
-		{
-			userinfo *u = users.access(userkey(ci->authname, ci->authdesc));
-			if (u)
-			{
-				uint seed[3] = { ::hthash(serverauth) + detrnd(size_t(ci) + size_t(user) + size_t(desc), 0x10000), uint(totalmillis), randomMT() };
-				vector<char> buf;
-				ci->authchallenge = genchallenge(u->pubkey, seed, sizeof(seed), buf);
-				sendf(ci->clientnum, 1, "risis", N_AUTHCHAL, desc, ci->authreq, buf.getbuf());
-			}
-			else ci->cleanauth();
-		}
-		else if (!requestmasterf("reqauth %u %s\n", ci->authreq, ci->authname))
-		{
-			ci->cleanauth();
-			sendf(ci->clientnum, 1, "ris", N_SERVMSG, "not connected to authentication server");
-		}
-		if (ci->authreq) return true;
-		if (ci->connectauth) disconnect_client(ci->clientnum, ci->connectauth);
-		return false;
+		ClrServer::instance->OnAuthRequest(ci->clientnum, user, desc);
+		return true;
 	}
 
 	void answerchallenge(clientinfo *ci, uint id, char *val, const char *desc)
 	{
-		if (ci->authreq != id || strcmp(ci->authdesc, desc))
-		{
-			ci->cleanauth();
-			if (ci->connectauth) disconnect_client(ci->clientnum, ci->connectauth);
-			return;
-		}
 		for (char *s = val; *s; s++)
 		{
 			if (!isxdigit(*s)) { *s = '\0'; break; }
 		}
-		if (desc[0])
-		{
-			if (ci->authchallenge && checkchallenge(val, ci->authchallenge))
-			{
-				userinfo *u = users.access(userkey(ci->authname, ci->authdesc));
-				if (u)
-				{
-					if (ci->connectauth) connected(ci);
-					if (ci->authkickvictim >= 0)
-					{
-						if (setmaster(ci, true, "", ci->authname, ci->authdesc, u->privilege, false, true))
-							trykick(ci, ci->authkickvictim, ci->authkickreason, ci->authname, ci->authdesc, u->privilege);
-					}
-					else setmaster(ci, true, "", ci->authname, ci->authdesc, u->privilege);
-				}
-			}
-			ci->cleanauth();
-		}
-		else if (!requestmasterf("confauth %u %s\n", id, val))
-		{
-			ci->cleanauth();
-			sendf(ci->clientnum, 1, "ris", N_SERVMSG, "not connected to authentication server");
-		}
-		if (!ci->authreq && ci->connectauth) disconnect_client(ci->clientnum, ci->connectauth);
+		ClrServer::instance->OnAuthResponse(ci->clientnum, id, val);
 	}
 
 	void processmasterinput(const char *cmd, int cmdlen, const char *args)
@@ -3024,6 +3013,9 @@ namespace server
 				putint(cm->messages, N_SPAWN);
 				sendstate(cq->state, cm->messages);
 			});
+
+			ClrServer::instance->OnSpawn(cq->clientnum);
+
 			break;
 		}
 
@@ -3100,8 +3092,11 @@ namespace server
 			QUEUE_MSG;
 			getstring(text, p);
 			filtertext(text, text);
-			QUEUE_STR(text);
-			if (isdedicatedserver()) logoutf("%s: %s", colorname(cq), text);
+
+			if (ClrServer::instance->OnText(ci->clientnum, text)) {
+				QUEUE_STR(text);
+				if (isdedicatedserver()) logoutf("%s: %s", colorname(cq), text);
+			}
 			break;
 		}
 
@@ -3109,13 +3104,15 @@ namespace server
 		{
 			getstring(text, p);
 			if (!ci || !cq || (ci->state.state == CS_SPECTATOR && !ci->local && !ci->privilege) || !m_teammode || !cq->team[0]) break;
-			loopv(clients)
-			{
-				clientinfo *t = clients[i];
-				if (t == cq || t->state.state == CS_SPECTATOR || t->state.aitype != AI_NONE || strcmp(cq->team, t->team)) continue;
-				sendf(t->clientnum, 1, "riis", N_SAYTEAM, cq->clientnum, text);
+			if (ClrServer::instance->OnSayTeam(ci->clientnum, text)) {
+				loopv(clients)
+				{
+					clientinfo *t = clients[i];
+					if (t == cq || t->state.state == CS_SPECTATOR || t->state.aitype != AI_NONE || strcmp(cq->team, t->team)) continue;
+					sendf(t->clientnum, 1, "riis", N_SAYTEAM, cq->clientnum, text);
+				}
+				if (isdedicatedserver()) logoutf("%s <%s>: %s", colorname(cq), cq->team, text);
 			}
-			if (isdedicatedserver()) logoutf("%s <%s>: %s", colorname(cq), cq->team, text);
 			break;
 		}
 
@@ -3125,7 +3122,7 @@ namespace server
 			getstring(text, p);
 			filtertext(text, text, false, MAXNAMELEN);
 			if (!text[0]) copystring(ci->name, "unnamed");
-			
+
 			bool allow_rename = strcmp(ci->name, text) &&
 				ClrServer::instance->OnAllowRename(ci->clientnum, text);
 
@@ -3188,7 +3185,9 @@ namespace server
 			getstring(text, p);
 			filtertext(text, text, false);
 			int reqmode = getint(p);
-			vote(text, reqmode, sender);
+			if (ClrServer::instance->OnMapVote(ci->clientnum, text, modename(reqmode, "unknown"))) {
+				vote(text, reqmode, sender);
+			}
 			break;
 		}
 
@@ -3271,14 +3270,11 @@ namespace server
 			{
 				if ((ci->privilege >= PRIV_ADMIN || ci->local) || (mastermask&(1 << mm)))
 				{
-					mastermode = mm;
-					allowedips.shrink(0);
-					if (mm >= MM_PRIVATE)
+					if (!ClrServer::instance->OnSetMasterModeRequest(ci->clientnum, mastermodename(mastermode), mastermodename(mm)))
 					{
-						loopv(clients) allowedips.add(getclientip(clients[i]->clientnum));
+						break;
 					}
-					sendf(-1, 1, "rii", N_MASTERMODE, mastermode);
-					//sendservmsgf("mastermode is now %s (%d)", mastermodename(mastermode), mastermode);
+					ClrServer::instance->SetMasterMode(mm, ci->clientnum);
 				}
 				else
 				{
@@ -3293,8 +3289,7 @@ namespace server
 		{
 			if (ci->privilege || ci->local)
 			{
-				bannedips.shrink(0);
-				sendservmsg("cleared all bans");
+				ClrServer::instance->OnClearBansRequest();
 			}
 			break;
 		}
@@ -3304,7 +3299,10 @@ namespace server
 			int victim = getint(p);
 			getstring(text, p);
 			filtertext(text, text);
-			trykick(ci, victim, text);
+			// trykick(ci, victim, text);
+
+			clientinfo *vinfo = getinfo(victim);
+			ClrServer::instance->OnKickRequest(ci->clientnum, ci->name, 14400, victim, vinfo->name);
 			break;
 		}
 
@@ -3333,6 +3331,9 @@ namespace server
 			}
 			sendf(-1, 1, "ri3", N_SPECTATOR, spectator, val);
 			if (!val && !hasmap(spinfo)) rotatemap(true);
+
+			ClrServer::instance->OnSpectator(spinfo->clientnum);
+
 			break;
 		}
 
@@ -3349,7 +3350,7 @@ namespace server
 			copystring(oldTeam, wi->team);
 
 			if ((!smode || smode->canchangeteam(wi, wi->team, text)) &&
-				ClrServer::instance->OnTeamChangeRequest(wi->clientnum, oldTeam, ci->team)  && addteaminfo(text))
+				ClrServer::instance->OnTeamChangeRequest(wi->clientnum, oldTeam, ci->team) && addteaminfo(text))
 			{
 				if (wi->state.state == CS_ALIVE) suicide(wi);
 				ClrServer::instance->OnTeamChange(wi->clientnum, oldTeam, text);
@@ -3568,6 +3569,7 @@ namespace server
 
 		case N_SERVCMD:
 			getstring(text, p);
+			ClrServer::instance->OnServerCommand(ci->clientnum, text);
 			break;
 
 #define PARSEMESSAGES 1
@@ -3634,6 +3636,28 @@ namespace server
 		return attr.length() && attr[0] == PROTOCOL_VERSION;
 	}
 
+	// server methods
+	void SetMasterMode(int value, int cn)
+	{
+		if (value == mastermode)
+		{
+			return;
+		}
+
+		int prev_mastermode = mastermode;
+
+		mastermode = value;
+		allowedips.shrink(0);
+
+		if (mastermode >= MM_PRIVATE)
+		{
+			loopv(clients) allowedips.add(getclientip(clients[i]->clientnum));
+		}
+
+		ClrServer::instance->OnSetMasterMode(cn, mastermodename(prev_mastermode), mastermodename(mastermode));
+
+		sendf(-1, 1, "rii", N_MASTERMODE, mastermode);
+	}
+
 #include "aiman.h"
 }
-

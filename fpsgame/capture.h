@@ -872,6 +872,7 @@ ICOMMAND(insidebases, "", (),
         score &cs = findscore(team);
         cs.total += n;
         sendf(-1, 1, "riisi", N_BASESCORE, base, team, cs.total);
+		ClrServer::instance->OnScoreUpdate(team, cs.total);
     }
 
     void regenowners(baseinfo &b, int ticks)

@@ -22,6 +22,10 @@ public:
 		};
 	};
 
+
+	virtual void SetMasterMode(int value) { return SetMasterMode(value, -1); }
+	virtual void SetMasterMode(int value, int cn);
+	
 public:
 	bool OnInit();
 
@@ -36,6 +40,40 @@ public:
 
 	bool OnTeamChange(int clientNumber, const char * oldTeam, const char * newTeam);
 	bool OnTeamChangeRequest(int clientNumber, const char * oldTeam, const char * newTeam);
+
+	bool OnText(int clientNumber, const char * text);
+	bool OnSayTeam(int clientNumber, const char * text);
+	bool OnServerCommand(int clientNumber, const char * text);
+
+	bool OnMapVote(int clientNumber, const char * map, const char * mode);
+	bool OnMapVotePassed(const char * map, const char * mode);
+
+	bool OnSetMasterMode(int clientNumber, const char * oldMode, const char * newMode);
+	bool OnSetMasterModeRequest(int a, const char * oldMode, const char * newMode);
+	bool OnSpectator(int clientNumber);
+	// bool OnPrivilege(int clientNumber, int oldLevel, int newLevel);
+	bool OnSetMaster(int clientNumber, const char * password, bool force);
+	bool OnClearBansRequest();
+	bool OnKickRequest(int kickerClientNumber, const char * kickerName, int banTime, int victimClientNumber, const char * victimName);
+
+	bool OnAuthRequest(int clientNumber, const char * username, const char * domain);
+	bool OnAuthResponse(int clientNumber, int id, const char * val);
+
+	bool OnModMap(int clientNumber, const char * map, int crc);
+
+	bool OnTeamkill(int actorClientNumber, int targetClientNumber);
+	bool OnFrag(int actorClientNumber, int targetClientNumber);
+	bool OnShot(int clientNumber, int weapon, int hits);
+	bool OnSuicide(int clientNumber);
+	bool OnSpawn(int clientNumber);
+	bool OnDamage(int actorClientNumber, int targetClientNumber, int damage, int weapon);
+	bool OnTakeFlag(int clientNumber, const char * team);
+	bool OnDropFlag(int clientNumber, const char * team);
+	bool OnScoreFlag(int clientNumber, const char * team, int score);
+	bool OnReturnFlag(int clientNumber, const char * team);
+	bool OnFlagReset(const char * team);
+	bool OnScoreUpdate(const char * team, int score);
+
 
 private:
 	void LoadDll(const char* path);
