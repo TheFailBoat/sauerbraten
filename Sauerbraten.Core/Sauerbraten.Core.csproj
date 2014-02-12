@@ -16,7 +16,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\..\bin\plugins\</OutputPath>
+    <OutputPath>..\..\bin\plugins\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -43,7 +43,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Sauerbraten.Interfaces\Sauerbraten.Interfaces.csproj">
+    <ProjectReference Include="..\Sauerbraten.Interfaces\Sauerbraten.Interfaces.csproj">
       <Project>{082DB9EF-39EB-4A99-B8C2-249034CFE7D9}</Project>
       <Name>Sauerbraten.Interfaces</Name>
     </ProjectReference>

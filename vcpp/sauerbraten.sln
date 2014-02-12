@@ -10,7 +10,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sauerbraten", "sauerbraten.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sauerbraten.Interfaces", "..\Sauerbraten.Interfaces\Sauerbraten.Interfaces.csproj", "{082DB9EF-39EB-4A99-B8C2-249034CFE7D9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sauerbraten.Core", "Sauerbraten.Core\Sauerbraten.Core.csproj", "{82109B28-FB03-47BD-B682-E247B194356D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sauerbraten.Core", "..\Sauerbraten.Core\Sauerbraten.Core.csproj", "{82109B28-FB03-47BD-B682-E247B194356D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -54,6 +54,7 @@ Global
 		{082DB9EF-39EB-4A99-B8C2-249034CFE7D9}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
 		{082DB9EF-39EB-4A99-B8C2-249034CFE7D9}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
 		{082DB9EF-39EB-4A99-B8C2-249034CFE7D9}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{082DB9EF-39EB-4A99-B8C2-249034CFE7D9}.Debug|Win32.Build.0 = Debug|Any CPU
 		{082DB9EF-39EB-4A99-B8C2-249034CFE7D9}.Debug|x64.ActiveCfg = Debug|Any CPU
 		{082DB9EF-39EB-4A99-B8C2-249034CFE7D9}.Profile|Any CPU.ActiveCfg = Release|Any CPU
 		{082DB9EF-39EB-4A99-B8C2-249034CFE7D9}.Profile|Any CPU.Build.0 = Release|Any CPU
@@ -72,6 +73,7 @@ Global
 		{82109B28-FB03-47BD-B682-E247B194356D}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
 		{82109B28-FB03-47BD-B682-E247B194356D}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
 		{82109B28-FB03-47BD-B682-E247B194356D}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{82109B28-FB03-47BD-B682-E247B194356D}.Debug|Win32.Build.0 = Debug|Any CPU
 		{82109B28-FB03-47BD-B682-E247B194356D}.Debug|x64.ActiveCfg = Debug|Any CPU
 		{82109B28-FB03-47BD-B682-E247B194356D}.Profile|Any CPU.ActiveCfg = Release|Any CPU
 		{82109B28-FB03-47BD-B682-E247B194356D}.Profile|Any CPU.Build.0 = Release|Any CPU
