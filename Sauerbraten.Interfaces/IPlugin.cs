@@ -8,6 +8,8 @@ namespace Sauerbraten.Interfaces
 {
     public interface IPlugin
     {
+        string Name { get; }
+
         bool OnInit();
 
         bool OnConnecting(int clientNumber, string hostname, string name, string password, bool isReserved);
