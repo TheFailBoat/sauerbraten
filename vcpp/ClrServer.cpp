@@ -1,6 +1,7 @@
 #include "cube.h"
 #include "ClrServer.h"
 #include <stdio.h>
+#include <vcclr.h>
 
 ClrServer::ClrServer()
 {
@@ -35,193 +36,231 @@ void ClrServer::LoadDll(const char* path){
 	}
 }
 
+#define PLUGINS_RUN(X, ...) do {\
+	int count = plugins->Count;  \
+	for (int i = 0; i < count; i++)\
+{ \
+	if (!plugins[i]->X(__VA_ARGS__)) \
+{ return false; } \
+} \
+	return true; \
+} \
+while (false)
+
 bool ClrServer::OnInit()
 {
-	printf("Init!\n");
-	return true;
+	PLUGINS_RUN(OnInit);
 }
 
-bool ClrServer::OnConnecting(int clientNumber, const char * hostname, const char * name, const char * password, bool isReserved)
+bool ClrServer::OnConnecting(int clientNumber, const char * _hostname, const char * _name, const char * _password, bool isReserved)
 {
-	printf("cid %i connecting\n", clientNumber);
-	return true;
+	System::String^ hostname = gcnew System::String(_hostname);
+	System::String^ name = gcnew System::String(_name);
+	System::String^ password = gcnew System::String(_password);
+
+	PLUGINS_RUN(OnConnecting, clientNumber, hostname, name, password, isReserved);
 }
 bool ClrServer::OnConnect(int clientNumber, bool spy)
 {
-	printf("cid %i connected\n", clientNumber);
-	return true;
+	PLUGINS_RUN(OnConnect, clientNumber, spy);
 }
-bool ClrServer::OnDisconnect(int clientNumber, const char * reason)
+
+bool ClrServer::OnDisconnect(int clientNumber, const char * _reason)
 {
-	printf("cid %i disconnecting\n", clientNumber);
-	return true;
+	System::String^ reason = gcnew System::String(_reason);
+	
+	PLUGINS_RUN(OnDisconnect, clientNumber, reason);
 }
-bool ClrServer::OnFailedConnect(const char * hostname, const char * reason)
+bool ClrServer::OnFailedConnect(const char * _hostname, const char * _reason)
 {
-	printf("host %s failed to connect\n", hostname);
-	return true;
+	System::String^ hostname = gcnew System::String(_hostname);
+	System::String^ reason = gcnew System::String(_reason);
+
+	PLUGINS_RUN(OnFailedConnect, hostname, reason);
 }
 
 bool ClrServer::OnRenaming(int clientNumber)
 {
-	printf("on renaming %i\n", clientNumber);
-	return true;
+	PLUGINS_RUN(OnRenaming, clientNumber);
 }
-bool ClrServer::OnAllowRename(int clientNumber, const char * newName)
+bool ClrServer::OnAllowRename(int clientNumber, const char * _newName)
 {
-	printf("allowing rename to '%s' by %i\n", newName, clientNumber);
-	return true;
+	System::String^ newName = gcnew System::String(_newName);
+
+	PLUGINS_RUN(OnAllowRename, clientNumber, newName);
 }
-bool ClrServer::OnRename(int clientNumber, const char * oldName, const char * newName)
+bool ClrServer::OnRename(int clientNumber, const char * _oldName, const char * _newName)
 {
-	printf("rename to '%s from '%s' by %i\n", newName, oldName, clientNumber);
-	return true;
+	System::String^ oldName = gcnew System::String(_oldName);
+	System::String^ newName = gcnew System::String(_newName);
+
+	PLUGINS_RUN(OnRename, clientNumber, oldName, newName);
 }
 
-bool ClrServer::OnTeamChange(int clientNumber, const char * oldTeam, const char * newTeam)
+bool ClrServer::OnTeamChange(int clientNumber, const char * _oldTeam, const char * _newTeam)
 {
-	printf("moved %i from '%s' to '%s'\n", clientNumber, oldTeam, newTeam);
-	return true;
+	System::String^ oldTeam = gcnew System::String(_oldTeam);
+	System::String^ newTeam = gcnew System::String(_newTeam);
+
+	PLUGINS_RUN(OnTeamChange, clientNumber, oldTeam, newTeam);
 }
-bool ClrServer::OnTeamChangeRequest(int clientNumber, const char * oldTeam, const char * newTeam)
+bool ClrServer::OnTeamChangeRequest(int clientNumber, const char * _oldTeam, const char * _newTeam)
 {
-	printf("request move %i from '%s' to '%s'\n", clientNumber, oldTeam, newTeam);
-	return true;
+	System::String^ oldTeam = gcnew System::String(_oldTeam);
+	System::String^ newTeam = gcnew System::String(_newTeam);
+
+	PLUGINS_RUN(OnTeamChangeRequest, clientNumber, oldTeam, newTeam);
 }
 
-bool ClrServer::OnText(int clientNumber, const char * text)
+bool ClrServer::OnText(int clientNumber, const char * _text)
 {
-	printf("text from %i '%s'\n", clientNumber, text);
-	return true;
+	System::String^ text = gcnew System::String(_text);
+
+	PLUGINS_RUN(OnText, clientNumber, text);
 }
-bool ClrServer::OnSayTeam(int clientNumber, const char * text)
+bool ClrServer::OnSayTeam(int clientNumber, const char * _text)
 {
-	printf("team text from %i '%s'\n", clientNumber, text);
-	return true;
+	System::String^ text = gcnew System::String(_text);
+
+	PLUGINS_RUN(OnSayTeam, clientNumber, text);
 }
-bool ClrServer::OnServerCommand(int clientNumber, const char * text)
+bool ClrServer::OnServerCommand(int clientNumber, const char * _text)
 {
-	printf("server command from %i '%s'\n", clientNumber, text);
-	return true;
+	System::String^ text = gcnew System::String(_text);
+
+	PLUGINS_RUN(OnServerCommand, clientNumber, text);
 }
 
-bool ClrServer::OnMapVote(int clientNumber, const char * map, const char * mode)
+bool ClrServer::OnMapVote(int clientNumber, const char * _map, const char * _mode)
 {
-	printf("client %i votes for %s on %s\n", clientNumber, mode, map);
-	return true;
+	System::String^ map = gcnew System::String(_map);
+	System::String^ mode = gcnew System::String(_mode);
+
+	PLUGINS_RUN(OnMapVote, clientNumber, map, mode);
 }
-bool ClrServer::OnMapVotePassed(const char * map, const char * mode)
+bool ClrServer::OnMapVotePassed(const char * _map, const char * _mode)
 {
-	printf("%s on %s wins on vote\n", mode, map);
-	return true;
+	System::String^ map = gcnew System::String(_map);
+	System::String^ mode = gcnew System::String(_mode);
+
+	PLUGINS_RUN(OnMapVotePassed, map, mode);
 }
 
-bool ClrServer::OnSetMasterMode(int clientNumber, const char * oldMode, const char * newMode)
+bool ClrServer::OnSetMasterMode(int clientNumber, const char * _oldMode, const char * _newMode)
 {
-	printf("setmastermode\n");
-	return true;
+	System::String^ oldMode = gcnew System::String(_oldMode);
+	System::String^ newMode = gcnew System::String(_newMode);
+
+	PLUGINS_RUN(OnSetMasterMode, clientNumber, oldMode, newMode);
 }
-bool ClrServer::OnSetMasterModeRequest(int a, const char * oldMode, const char * newMode)
+bool ClrServer::OnSetMasterModeRequest(int clientNumber, const char * _oldMode, const char * _newMode)
 {
-	printf("setmastermoderequest\n");
-	return true;
+	System::String^ oldMode = gcnew System::String(_oldMode);
+	System::String^ newMode = gcnew System::String(_newMode);
+
+	PLUGINS_RUN(OnSetMasterModeRequest, clientNumber, oldMode, newMode);
 }
 bool ClrServer::OnSpectator(int clientNumber)
 {
-	printf("spectator\n");
-	return true;
+	PLUGINS_RUN(OnSpectator, clientNumber);
 }
 // bool OnPrivilege(int clientNumber, int oldLevel, int newLevel);
-bool ClrServer::OnSetMaster(int clientNumber, const char * password, bool force)
+bool ClrServer::OnSetMaster(int clientNumber, const char * _password, bool force)
 {
-	printf("setmaster\n");
-	return true;
+	System::String^ password = gcnew System::String(_password);
+
+	PLUGINS_RUN(OnSetMaster, clientNumber, password, force);
 }
 bool ClrServer::OnClearBansRequest()
 {
-	printf("clearbans\n");
-	return true;
+	PLUGINS_RUN(OnClearBansRequest);
 }
-bool ClrServer::OnKickRequest(int kickerClientNumber, const char * kickerName, int banTime, int victimClientNumber, const char * victimName)
+bool ClrServer::OnKickRequest(int kickerClientNumber, const char * _kickerName, int banTime, int victimClientNumber, const char * _victimName)
 {
-	printf("kickrequest\n");
-	return true;
+	System::String^ kickerName = gcnew System::String(_kickerName);
+	System::String^ victimName = gcnew System::String(_victimName);
+
+	PLUGINS_RUN(OnKickRequest, kickerClientNumber, kickerName, banTime, victimClientNumber, victimName);
 }
 
-bool ClrServer::OnAuthRequest(int clientNumber, const char * username, const char * domain)
+bool ClrServer::OnAuthRequest(int clientNumber, const char * _username, const char * _domain)
 {
-	printf("authreq\n");
-	return true;
+	System::String^ username = gcnew System::String(_username);
+	System::String^ domain = gcnew System::String(_domain);
+
+	PLUGINS_RUN(OnAuthRequest, clientNumber, username, domain);
 }
-bool ClrServer::OnAuthResponse(int clientNumber, int id, const char * val)
+bool ClrServer::OnAuthResponse(int clientNumber, int id, const char * _val)
 {
-	printf("authres\n");
-	return true;
+	System::String^ val = gcnew System::String(_val);
+
+	PLUGINS_RUN(OnAuthResponse, clientNumber, id, val);
 }
 
-bool ClrServer::OnModMap(int clientNumber, const char * map, int crc)
+bool ClrServer::OnModMap(int clientNumber, const char * _map, int crc)
 {
-	printf("modmap\n");
-	return true;
+	System::String^ map = gcnew System::String(_map);
+
+	PLUGINS_RUN(OnModMap, clientNumber, map, crc);
 }
 
 bool ClrServer::OnTeamkill(int actorClientNumber, int targetClientNumber)
 {
-	printf("tk\n");
-	return true;
+	PLUGINS_RUN(OnTeamkill, actorClientNumber, targetClientNumber);
 }
 bool ClrServer::OnFrag(int actorClientNumber, int targetClientNumber)
 {
-	printf("frag\n");
-	return true;
+	PLUGINS_RUN(OnFrag, actorClientNumber, targetClientNumber);
 }
 bool ClrServer::OnShot(int clientNumber, int weapon, int hits)
 {
-	printf("shot\n");
-	return true;
+	PLUGINS_RUN(OnShot, clientNumber, weapon, hits);
 }
 bool ClrServer::OnSuicide(int clientNumber)
 {
-	printf("suicide\n");
-	return true;
+	PLUGINS_RUN(OnSuicide, clientNumber);
 }
 bool ClrServer::OnSpawn(int clientNumber)
 {
-	printf("spawn\n");
-	return true;
+	PLUGINS_RUN(OnSpawn, clientNumber);
 }
 bool ClrServer::OnDamage(int actorClientNumber, int targetClientNumber, int damage, int weapon)
 {
-	printf("damage\n");
-	return true;
+	PLUGINS_RUN(OnDamage, actorClientNumber, targetClientNumber, damage, weapon);
 }
-bool ClrServer::OnTakeFlag(int clientNumber, const char * team)
+bool ClrServer::OnTakeFlag(int clientNumber, const char * _team)
 {
-	printf("take flag\n");
-	return true;
+	System::String^ team = gcnew System::String(_team);
+
+	PLUGINS_RUN(OnTakeFlag, clientNumber, team);
 }
-bool ClrServer::OnDropFlag(int clientNumber, const char * team)
+bool ClrServer::OnDropFlag(int clientNumber, const char * _team)
 {
-	printf("drop flag\n");
-	return true;
+	System::String^ team = gcnew System::String(_team);
+
+	PLUGINS_RUN(OnDropFlag, clientNumber, team);
 }
-bool ClrServer::OnScoreFlag(int clientNumber, const char * team, int score)
+bool ClrServer::OnScoreFlag(int clientNumber, const char * _team, int score)
 {
-	printf("score flag\n");
-	return true;
+	System::String^ team = gcnew System::String(_team);
+
+	PLUGINS_RUN(OnScoreFlag, clientNumber, team, score);
 }
-bool ClrServer::OnReturnFlag(int clientNumber, const char * team)
+bool ClrServer::OnReturnFlag(int clientNumber, const char * _team)
 {
-	printf("return flag\n");
-	return true;
+	System::String^ team = gcnew System::String(_team);
+
+	PLUGINS_RUN(OnReturnFlag, clientNumber, team);
 }
-bool ClrServer::OnFlagReset(const char * team)
+bool ClrServer::OnFlagReset(const char * _team)
 {
-	printf("flag reset\n");
-	return true;
+	System::String^ team = gcnew System::String(_team);
+
+	PLUGINS_RUN(OnFlagReset, team);
 }
-bool ClrServer::OnScoreUpdate(const char * team, int score)
+bool ClrServer::OnScoreUpdate(const char * _team, int score)
 {
-	printf("score update\n");
-	return true;
+	System::String^ team = gcnew System::String(_team);
+
+	PLUGINS_RUN(OnScoreUpdate, team, score);
 }
