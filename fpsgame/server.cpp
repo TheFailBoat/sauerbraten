@@ -363,6 +363,12 @@ namespace server
 			mapchange();
 		}
 
+		void sendprivtext(const char * text)
+		{
+			if (state.aitype != AI_NONE) return;
+			sendf(clientnum, 1, "ris", N_SERVMSG, text);
+		}
+
 		const char * hostname()const
 		{
 			static char hostname_buffer[16];
@@ -3637,27 +3643,9 @@ namespace server
 	}
 
 	// server methods
-	void SetMasterMode(int value, int cn)
-	{
-		if (value == mastermode)
-		{
-			return;
-		}
-
-		int prev_mastermode = mastermode;
-
-		mastermode = value;
-		allowedips.shrink(0);
-
-		if (mastermode >= MM_PRIVATE)
-		{
-			loopv(clients) allowedips.add(getclientip(clients[i]->clientnum));
-		}
-
-		ClrServer::instance->OnSetMasterMode(cn, mastermodename(prev_mastermode), mastermodename(mastermode));
-
-		sendf(-1, 1, "rii", N_MASTERMODE, mastermode);
-	}
+#define __IN_SERVER_CPP__
+#include "../vcpp/ClrServer_functions.cpp"
+#undef __IN_SERVER_CPP__
 
 #include "aiman.h"
 }

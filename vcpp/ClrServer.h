@@ -26,6 +26,10 @@ public:
 	virtual void SetMasterMode(int value) { return SetMasterMode(value, -1); }
 	virtual void SetMasterMode(int value, int cn);
 	
+	virtual void SendMessage(System::String^ text);
+	virtual void SendTeamMessage(System::String^ team, System::String^ text);
+	virtual void SendPrivateMessage(int cn, System::String^ text);
+
 public:
 	bool OnInit();
 

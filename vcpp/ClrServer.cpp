@@ -1,22 +1,29 @@
 #include "cube.h"
 #include "ClrServer.h"
+#include "ClrServer_functions.h"
 #include <stdio.h>
 #include <vcclr.h>
+
+
+#define STRTOPTR(S, D) System::IntPtr D##_ptr = System::Runtime::InteropServices::Marshal::StringToHGlobalAnsi(S); char * D = static_cast<char*>(D##_ptr.ToPointer())
+#define CLRFREESTR(X) System::Runtime::InteropServices::Marshal::FreeHGlobal(X##_ptr)
+#define CLRFREE(X) System::Runtime::InteropServices::Marshal::FreeHGlobal(X)
+
+#define GETABSPATH(X) System::IO::Path::Combine(System::Environment::CurrentDirectory, (X))
 
 ClrServer::ClrServer()
 {
 	plugins = gcnew PluginList();
 
-	System::String^ corePath = System::IO::Path::Combine(System::Environment::CurrentDirectory, "bin/plugins/Sauerbraten.Core.dll");
-	LoadDll(corePath);
+	LoadDll(GETABSPATH("bin/plugins/Sauerbraten.Core.dll"));
 
 	auto toLoad = System::IO::Directory::GetFiles("bin/plugins", "*.dll", System::IO::SearchOption::AllDirectories);
 	for (int i = 0; i < toLoad->Length; i++) {
 		try {
-			if (System::IO::Path::GetFileName(toLoad[0]) != "Sauerbraten.Core.dll")
-				LoadDll(toLoad[i]);
+			if (System::IO::Path::GetFileName(toLoad[i]) != "Sauerbraten.Core.dll")
+				LoadDll(GETABSPATH(toLoad[i]));
 		}
-		catch (System::Exception^) {
+		catch (System::Exception^ e) {
 			fatal("error loading a plugin.");
 		}
 	}
@@ -27,13 +34,44 @@ ClrServer::~ClrServer()
 {
 }
 
-namespace server
-{
-	extern void SetMasterMode(int value, int cn);
-}
-
 void ClrServer::SetMasterMode(int value, int cn){
 	server::SetMasterMode(value, cn);
+}
+
+void ClrServer::SendMessage(System::String^ _text)
+{
+	STRTOPTR(_text, text);
+
+	try {
+		server::SendMessage(text);
+	}
+	finally {
+		CLRFREESTR(text);
+	}
+}
+void ClrServer::SendTeamMessage(System::String^ _team, System::String^ _text)
+{
+	STRTOPTR(_team, team);
+	STRTOPTR(_text, text);
+
+	try {
+		server::SendTeamMessage(team, text);
+	}
+	finally {
+		CLRFREESTR(team);
+		CLRFREESTR(text);
+	}
+}
+void ClrServer::SendPrivateMessage(int cn, System::String^ _text)
+{
+	STRTOPTR(_text, text);
+
+	try {
+		server::SendPrivateMessage(cn, text);
+	}
+	finally {
+		CLRFREESTR(text);
+	}
 }
 
 void ClrServer::LoadDll(System::String^ path){
@@ -42,11 +80,12 @@ void ClrServer::LoadDll(System::String^ path){
 	auto types = assembly->GetExportedTypes();
 
 	for (int i = 0; i < types->Length; i++) {
-		if (IPlugin::typeid->IsAssignableFrom(types[0])) {
-			auto plugin = dynamic_cast<IPlugin^>(System::Activator::CreateInstance(types[0]));
+		if (IPlugin::typeid->IsAssignableFrom(types[i]) && types[i]->IsClass && !types[i]->IsAbstract) {
+			auto plugin = dynamic_cast<IPlugin^>(System::Activator::CreateInstance(types[i]));
 
 			printf("Loaded plugin: %s called '%s'\n", plugin->GetType()->FullName, plugin->Name);
 
+			plugin->Server = this;
 			plugins->Add(plugin);
 		}
 	}

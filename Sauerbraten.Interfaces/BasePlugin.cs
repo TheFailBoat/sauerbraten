@@ -2,6 +2,8 @@
 {
     public abstract class BasePlugin : IPlugin
     {
+        public IServer Server { protected get; set; }
+
         public abstract string Name { get; }
 
         public virtual bool OnInit()

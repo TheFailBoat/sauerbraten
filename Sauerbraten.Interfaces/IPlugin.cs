@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Sauerbraten.Interfaces
+﻿namespace Sauerbraten.Interfaces
 {
     public interface IPlugin
     {
+        IServer Server { set; }
+
         string Name { get; }
 
         bool OnInit();
