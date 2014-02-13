@@ -1,6 +1,4 @@
-﻿using System;
-using System.Globalization;
-using Sauerbraten.Core.Utils;
+﻿using Sauerbraten.Core.Utils;
 using Sauerbraten.Interfaces;
 
 namespace Sauerbraten.Core
@@ -12,16 +10,13 @@ namespace Sauerbraten.Core
         public override bool OnText(int clientNumber, string text)
         {
             string arg;
-            if (text.IsCommand("stats", out arg))
-            {
-                Server.SendPrivateMessage(clientNumber, "stats!");
-                return false;
-            }
+            if (!text.IsCommand("stats", out arg))
+                return base.OnText(clientNumber, text);
 
-            return base.OnText(clientNumber, text);
+            Server.SendPrivateMessage(clientNumber, string.Format(new ColouredFormatter(), "stats! {0:red} {1:blue}", "hello", string.IsNullOrEmpty(arg) ? "world" : arg));
+            return false;
         }
 
         //TODO record stats
     }
-
 }
