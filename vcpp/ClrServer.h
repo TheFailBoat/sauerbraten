@@ -2,6 +2,8 @@
 
 typedef Sauerbraten::Interfaces::IServer IServer;
 typedef Sauerbraten::Interfaces::IPlugin IPlugin;
+typedef Sauerbraten::Interfaces::IClientInfo IClientInfo;
+typedef Sauerbraten::Interfaces::IGameState IGameState;
 typedef System::Collections::Generic::IReadOnlyList<IPlugin^> IPluginReadOnlyList;
 typedef System::Collections::Generic::List<IPlugin^> PluginList;
 
@@ -30,6 +32,14 @@ public:
 	virtual void SendTeamMessage(System::String^ team, System::String^ text);
 	virtual void SendPrivateMessage(int cn, System::String^ text);
 
+	virtual int GetClientNumber(System::String^ name);
+
+	virtual System::Collections::Generic::IEnumerable<int>^ GetPlayers();
+	virtual System::Collections::Generic::IEnumerable<int>^ GetPlayers(System::String^ team);
+	virtual System::Collections::Generic::IEnumerable<System::String^>^ GetTeams();
+
+	virtual IClientInfo^ GetClientInfo(int cn);
+	virtual IClientInfo^ GetClientInfo(System::String^ name);
 public:
 	bool OnInit();
 

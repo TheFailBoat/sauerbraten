@@ -74,6 +74,76 @@ void ClrServer::SendPrivateMessage(int cn, System::String^ _text)
 	}
 }
 
+int ClrServer::GetClientNumber(System::String^ _name)
+{
+	STRTOPTR(_name, name);
+
+	try {
+		return server::GetClientNumber(name);
+	}
+	finally {
+		CLRFREESTR(name);
+	}
+}
+
+System::Collections::Generic::IEnumerable<int>^ ClrServer::GetPlayers()
+{
+	std::vector<int> players = server::GetPlayers();
+	System::Collections::Generic::List<int>^ result = gcnew System::Collections::Generic::List<int>();
+
+	for (auto p = players.begin(); p != players.end(); p++) {
+		result->Add(*p);
+	}
+
+	return result;
+}
+System::Collections::Generic::IEnumerable<int>^ ClrServer::GetPlayers(System::String^ _team)
+{
+	System::Collections::Generic::List<int>^ result = gcnew System::Collections::Generic::List<int>();
+	STRTOPTR(_team, team);
+
+	try {
+		std::vector<int> players = server::GetPlayers(team);
+
+		for (auto p = players.begin(); p != players.end(); p++) {
+			result->Add(*p);
+		}
+	}
+	finally {
+		CLRFREESTR(team);
+	}
+
+	return result;
+}
+System::Collections::Generic::IEnumerable<System::String^>^ ClrServer::GetTeams()
+{
+	std::vector<const char *> teams = server::GetTeams();
+	System::Collections::Generic::List<System::String^>^ result = gcnew System::Collections::Generic::List<System::String^>();
+
+	for (auto t = teams.begin(); t != teams.end(); t++) {
+		result->Add(gcnew System::String(*t));
+	}
+
+	return result;
+}
+
+IClientInfo^ ClrServer::GetClientInfo(int cn)
+{
+	return server::GetClientInfo(cn);
+}
+IClientInfo^ ClrServer::GetClientInfo(System::String^ _name)
+{
+	STRTOPTR(_name, name);
+
+	try{
+		return server::GetClientInfo(name);
+	}
+	finally {
+		CLRFREESTR(name);
+	}
+}
+
+
 void ClrServer::LoadDll(System::String^ path){
 	auto assembly = System::Reflection::Assembly::LoadFile(path);
 

@@ -2,6 +2,7 @@
 
 #ifndef _TOOLS_H
 #define _TOOLS_H
+#include <string>
 
 #ifdef NULL
 #undef NULL
@@ -26,6 +27,7 @@ typedef unsigned long long int ullong;
 #define RESTRICT
 #endif
 
+#if 0 // removed
 inline void *operator new(size_t size)
 {
     void *p = malloc(size);
@@ -45,6 +47,7 @@ inline void *operator new(size_t, void *p) { return p; }
 inline void *operator new[](size_t, void *p) { return p; }
 inline void operator delete(void *, void *) {}
 inline void operator delete[](void *, void *) {}
+#endif
 
 #ifdef swap
 #undef swap

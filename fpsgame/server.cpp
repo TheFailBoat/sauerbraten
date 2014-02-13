@@ -1,4 +1,5 @@
 #include "game.h"
+#include "../vcpp/ClrServer_functions.h"
 
 namespace game
 {
