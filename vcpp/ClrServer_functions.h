@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <set>
+#include "ClientInfo.h"
 
 namespace server
 {

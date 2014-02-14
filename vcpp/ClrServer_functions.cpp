@@ -82,13 +82,70 @@ namespace server {
 		return result;
 	}
 
+	IGameState^ GetGameState(gamestate *s)
+	{
+		GameState^ gs = gcnew GameState();
+
+		gs->X = s->o.x;
+		gs->Y = s->o.y;
+		gs->Z = s->o.z;
+
+		gs->Health = s->health;
+		gs->MaxHealth = s->maxhealth;
+		gs->Armour = s->armour;
+
+		gs->GunSelect = s->gunselect;
+		gs->GunWait = s->gunwait;
+
+		gs->State = s->state;
+		gs->EditState = s->editstate;
+
+		gs->LastDeath = s->lastdeath;
+		gs->LastSpawn = s->lastspawn;
+		gs->LastShot = s->lastshot;
+
+		gs->Frags = s->frags;
+		gs->Flags = s->flags;
+		gs->Deaths = s->deaths;
+		gs->Teamkills = s->teamkills;
+		gs->ShotDamage = s->shotdamage;
+		gs->Damage = s->damage;
+		gs->Tokens = s->tokens;
+		gs->Suicides = s->suicides;
+		gs->Hits = s->hits;
+		gs->Misses = s->misses;
+		gs->Shots = s->shots;
+
+		gs->TimePlayed = s->timeplayed;
+		
+		return gs;
+	}
+
 	IClientInfo^ GetClientInfo(int cn)
 	{
-		return nullptr;
+		clientinfo* ci = get_ci(cn);
+		ClientInfo^ info = gcnew ClientInfo();
+
+		info->ClientNumber = ci->clientnum;
+
+		info->Name = gcnew System::String(ci->name);
+		info->Team = gcnew System::String(ci->team);
+
+		info->PlayerModel = ci->playermodel;
+
+		info->Privilege = ci->privilege;
+		info->Connected = ci->connected;
+		info->Local = ci->local;
+
+		info->State = GetGameState(&ci->state);
+
+		info->Ping = ci->ping;
+
+		return info;
 	}
 	IClientInfo^ GetClientInfo(const char * name)
 	{
-		return nullptr;
+		return GetClientInfo(GetClientNumber(name));
 	}
 
 #ifndef __IN_SERVER_CPP__

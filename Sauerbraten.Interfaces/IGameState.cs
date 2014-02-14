@@ -9,7 +9,6 @@
         int Health { get; }
         int MaxHealth { get; }
         int Armour { get; }
-        int MaxArmour { get; }
 
         int GunSelect { get; }
         int GunWait { get; }

@@ -422,6 +422,7 @@
     <ClInclude Include="..\fpsgame\ctf.h" />
     <ClInclude Include="..\fpsgame\extinfo.h" />
     <ClInclude Include="..\fpsgame\game.h" />
+    <ClInclude Include="ClientInfo.h" />
     <ClInclude Include="ClrServer.h" />
     <ClInclude Include="ClrServer_functions.h" />
   </ItemGroup>
@@ -474,6 +475,7 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)1.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)1.obj</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="ClientInfo.cpp" />
     <ClCompile Include="ClrServer.cpp" />
     <ClCompile Include="ClrServer_functions.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
