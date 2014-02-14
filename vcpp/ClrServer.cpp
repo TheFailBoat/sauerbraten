@@ -162,13 +162,13 @@ void ClrServer::LoadDll(System::String^ path){
 }
 
 #define PLUGINS_RUN(X, ...) do {\
+	bool result = true; \
 	int count = plugins->Count;  \
 	for (int i = 0; i < count; i++)\
 { \
-	if (!plugins[i]->X(__VA_ARGS__)) \
-{ return false; } \
+	result &= !plugins[i]->X(__VA_ARGS__); \
 } \
-	return true; \
+	return result; \
 } \
 while (false)
 
